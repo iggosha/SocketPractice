@@ -10,7 +10,7 @@ import java.util.List;
 public class Server {
     public static void main(String[] args) {
         try {
-            System.out.println("Server is running");
+            System.out.println("Сервер запущен");
             int port = 3333;
             try (ServerSocket ss = new ServerSocket(port)) {
                 while (true) {
