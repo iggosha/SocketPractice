@@ -1,18 +1,14 @@
 package com.tcp;
 
-import java.io.DataInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Server {
     public static void main(String[] args) {
         try {
             System.out.println("Сервер запущен");
-            int port = 3333;
-            try (ServerSocket ss = new ServerSocket(port)) {
+            try (ServerSocket ss = new ServerSocket(3333)) {
                 while (true) {
                     Socket s = ss.accept();
                     ServerConnectionProcessor p = new ServerConnectionProcessor(s);
@@ -26,41 +22,51 @@ public class Server {
 }
 
 class ServerConnectionProcessor extends Thread {
-    private Socket sock;
+    private Socket socket;
+    private static double freqF = 0;
+    private static double freqU = 0;
 
     public ServerConnectionProcessor(Socket s) {
-        sock = s;
+        socket = s;
     }
 
     public void run() {
         try {
-            // Получаем запрос
-            boolean ready, writeCommands;
-            DataInputStream dataInputStream = new DataInputStream(sock.getInputStream());
-            ready = dataInputStream.readBoolean();
-            writeCommands = dataInputStream.readBoolean();
-            if (ready) {
-                // Создаем объекты
-                List<ProductPack> productPackList = new ArrayList<>();
-                for (int i = 0; i < 10; i++) {
-                    productPackList.add(new ProductPack());
+            System.out.println("Новый клиент подключился: " + socket);
+            // Создать потоки ввода и вывода для обмена данными с клиентом
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Создать поток для чтения сообщений с консоли
+            BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
+
+            // Запустить поток для чтения сообщений от клиента и отправки ответов
+            while (true) {
+                // Прочитать сообщение от клиента
+                String message = in.readLine();
+
+                // Если сообщение "exit", то завершить работу
+                if (message == null || message.equals("exit"))
+                    break;
+                else if (message.matches("\\d+\\.\\d+\\s\\d+\\.\\d+")) {
+                    freqF = Double.parseDouble(message.split(" ")[0]);
+                    freqU = Double.parseDouble(message.split(" ")[1]);
+                    out.println("Значения установлены");
+                    System.out.println("Установлены новые значения: " + freqF + " " + freqU);
+                } else {
+                    System.out.println("Клиенту " + socket + " переданы значения " + freqF + " " + freqU);
+                    out.println(freqF + " " + freqU);
                 }
-                if (writeCommands) {
-                    for (ProductPack product : productPackList) {
-                        System.out.println(product);
-                    }
-                }
-                // Передаём объекты
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(sock.getOutputStream());
-                for (ProductPack product : productPackList) {
-                    objectOutputStream.writeObject(product);
-                }
-                dataInputStream.close();
-                objectOutputStream.close();
-                sock.close();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("Ошибка при чтении сообщения от клиента: " + e.getMessage());
+        } finally {
+            try {
+                socket.close();
+                System.out.println("Клиент отключился: " + socket);
+            } catch (IOException e) {
+                System.err.println("Ошибка при закрытии сокета: " + e.getMessage());
+            }
         }
     }
 }

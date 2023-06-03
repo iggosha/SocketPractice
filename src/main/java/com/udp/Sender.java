@@ -19,6 +19,7 @@ public class Sender {
             DatagramPacket pack = new DatagramPacket(data, data.length, addr, 4444);
             DatagramSocket datagramSocket = new DatagramSocket();
             if (message.equals("00")) {
+                System.out.println("Клиент перезапущен");
                 datagramSocket.close();
                 return;
             } else if (message.equals("000")) {

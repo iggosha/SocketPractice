@@ -11,7 +11,7 @@ public class Receiver {
             while (true){
                 DatagramPacket pack = new DatagramPacket(new byte[64],64);
                 ds.receive(pack);
-                System.out.println(new String(pack.getData()));
+                System.out.println(new String(pack.getData()).trim());
             }
         }
         catch(Exception e) {
